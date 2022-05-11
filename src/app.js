@@ -1,6 +1,7 @@
-// Supports ES6
-// import { create, Whatsapp } from 'venom-bot';
 const venom = require('venom-bot');
+
+const secondsToWait = 10; // 20 seconds
+const targetPhoneNumber = '19995827540';
 
 venom
   .create(
@@ -14,9 +15,18 @@ venom
     console.log(erro);
   });
 
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 async function start(client) {
   await client
-    .sendText('5519999300566@c.us', 'Olá, seu boleto vencerá daqui há 7 dias')
+    .sendText(
+      `55${targetPhoneNumber}@c.us`,
+      'Olá, seu boleto exemplo vencerá daqui há 7 dias'
+    )
     .then((result) => {
       console.log('Result: ', result); // return object success
     })
@@ -24,17 +34,23 @@ async function start(client) {
       console.error('Error when sending: ', erro); // return object error
     });
 
+  await sleep(20 * 1000);
+
   await client
     .sendFile(
-      '5519999300566@c.us',
-      '../downloads/boleto-exemplo.pdf',
+      `55${targetPhoneNumber}@c.us`,
+      './downloads/boleto-exemplo.pdf',
       'boleto-exemplo',
-      'See my file in pdf'
+      'Veja meu arquivo pdf'
     )
     .then((result) => {
-      console.log('Result: ', result); //return object success
+      console.log('Result: ', result); // return object success
     })
     .catch((erro) => {
-      console.error('Error when sending: ', erro); //return object error
+      console.error('Error when sending: ', erro); // return object error
     });
+
+  setTimeout(async () => {
+    await start(client);
+  }, secondsToWait * 1000);
 }

@@ -1,4 +1,7 @@
 const venom = require('venom-bot');
+const api = require('./services/api');
+const { currentDate, currentDatePlus7Days } = require('../utils/dates');
+require('dotenv').config();
 
 const secondsToWait = 10; // 20 seconds
 const targetPhoneNumber = '19995827540';
@@ -21,7 +24,35 @@ function sleep(ms) {
   });
 }
 
+async function getAccessToken() {
+  const data = {
+    grant_type: 'personal',
+    personal_token: `${process.env.PERSONAL_TOKEN}`,
+  };
+
+  try {
+    const response = await api.post('/oauth/access_token', data);
+    const accessToken = response.data.access_token;
+
+    return accessToken;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 async function start(client) {
+  // Set Authorization header
+  const accessToken = getAccessToken();
+
+  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Get boletos em aberto que vencerão nos próximos 7 dias
+  const response = await api.get(
+    `/boletos?situacaoBoleto=10&dtTipo=dtVenc&dtIni=${currentDate}&dtFim=${currentDatePlus7Days}&orderBy=dtVenc,desc`
+  );
+
+  const boletosEmAberto = response.data;
+
   await client
     .sendText(
       `55${targetPhoneNumber}@c.us`,

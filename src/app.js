@@ -1,10 +1,12 @@
 const venom = require('venom-bot');
+
 const api = require('./services/api');
-const { currentDate, currentDatePlus7Days } = require('../utils/dates');
+const { currentDate, currentDatePlus } = require('../utils/dates');
+const downloadFile = require('../utils/downloadFile');
+const deleteFile = require('../utils/deleteFile');
 require('dotenv').config();
 
-const secondsToWait = 10; // 20 seconds
-const targetPhoneNumber = '19995827540';
+const hoursToWait = 24; // 24 hours
 
 venom
   .create(
@@ -13,16 +15,10 @@ venom
     (statusSession, session) => {},
     { useChrome: false, browserArgs: ['--no-sandbox'] }
   )
-  .then((client) => start(client))
+  .then((venomClient) => start(venomClient))
   .catch((erro) => {
     console.log(erro);
   });
-
-function sleep(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 async function getAccessToken() {
   const data = {
@@ -30,58 +26,113 @@ async function getAccessToken() {
     personal_token: `${process.env.PERSONAL_TOKEN}`,
   };
 
-  try {
-    const response = await api.post('/oauth/access_token', data);
-    const accessToken = response.data.access_token;
+  const response = await api.post('/oauth/access_token', data);
+  const accessToken = response.data.access_token;
 
-    return accessToken;
-  } catch (err) {
-    console.error(err);
-  }
+  return accessToken;
 }
 
-async function start(client) {
-  // Set Authorization header
-  const accessToken = getAccessToken();
+async function getBoletosQueVenceraoDaqui(dias) {
+  const dataVencimento = currentDatePlus(dias);
 
-  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
-
-  // Get boletos em aberto que vencerão nos próximos 7 dias
   const response = await api.get(
-    `/boletos?situacaoBoleto=10&dtTipo=dtVenc&dtIni=${currentDate}&dtFim=${currentDatePlus7Days}&orderBy=dtVenc,desc`
+    `/boletos?situacaoBoleto=10&dtTipo=dtVenc&dtIni=${dataVencimento}&dtFim=${dataVencimento}&orderBy=dtVenc,desc`
   );
 
-  const boletosEmAberto = response.data;
+  const boletos = response.data;
 
-  await client
-    .sendText(
-      `55${targetPhoneNumber}@c.us`,
-      'Olá, seu boleto exemplo vencerá daqui há 7 dias'
-    )
+  return { ...boletos, diasParaVencer: dias };
+}
+
+async function enviarMsgDeErroParaDesenvolvedor(msgErro, venomClient) {
+  await venomClient
+    .sendText(`55${process.env.TELEFONE_DESENVOLVEDOR}@c.us`, `${msgErro}`)
     .then((result) => {
       console.log('Result: ', result); // return object success
     })
-    .catch((erro) => {
-      console.error('Error when sending: ', erro); // return object error
+    .catch((err) => {
+      console.error('Error when sending: ', err); // return object error
     });
+}
 
-  await sleep(20 * 1000);
+async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
+  const { diasParaVencer } = dadosDosBoletos.data;
 
-  await client
-    .sendFile(
-      `55${targetPhoneNumber}@c.us`,
-      './downloads/boleto-exemplo.pdf',
-      'boleto-exemplo',
-      'Veja meu arquivo pdf'
-    )
-    .then((result) => {
-      console.log('Result: ', result); // return object success
-    })
-    .catch((erro) => {
-      console.error('Error when sending: ', erro); // return object error
-    });
+  dadosDosBoletos.data.forEach(async (element) => {
+    const response = await api.get(`/boletos/${element.codigo}`);
+
+    const linkBoleto = response.data.link;
+    const codCliente = response.data.codContato;
+
+    const { data } = await api.get(`/contatos/${codCliente}`);
+
+    const dadosCliente = data;
+    const telefoneCliente = dadosCliente.fones[1];
+    const nomeCliente = dadosCliente.nome;
+
+    downloadFile(linkBoleto);
+
+    // Enviar mensagem
+    await venomClient
+      .sendText(
+        `55${telefoneCliente}@c.us`,
+        `Olá, ${nomeCliente}. Seu boleto exemplo vencerá em ${
+          diasParaVencer === 1 ? 'amanhã' : diasParaVencer
+        }`
+      )
+      .then((result) => {
+        console.log('Result: ', result); // return object success
+      })
+      .catch(async (erro) => {
+        console.error('Error when sending: ', erro); // return object error
+        // Enviar mensagem de erro no Whatsapp do Desenvolvedor
+        await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
+      });
+
+    // Enviar boleto
+    await venomClient
+      .sendFile(
+        `55${telefoneCliente}@c.us`,
+        './temp/boleto-cliente.pdf',
+        'boleto-cliente',
+        'Veja meu arquivo pdf'
+      )
+      .then((result) => {
+        console.log('Result: ', result); // return object success
+      })
+      .catch(async (erro) => {
+        console.error('Error when sending: ', erro); // return object error
+        // Enviar mensagem de erro no Whatsapp do Desenvolvedor
+        await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
+      });
+
+    await deleteFile('./temp/boleto-cliente.pdf');
+  });
+}
+
+async function start(venomClient) {
+  // Set Authorization header with access_token
+  console.log('Setar Authorization header with access_token');
+  const accessToken = getAccessToken();
+  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Get boletos em aberto que vencerão amanhã e enviar para cliente
+  console.log('Buscar boletos que vencerão amanha');
+  const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);
+  console.log('Enviar boletos que vencerão amanha para clientes');
+  enviarBoletosParaClientes(boletosQueVenceraoAmanha);
+
+  // Get boletos em aberto que vencerão nos próximos 7 dias e enviar para cliente
+  console.log('Buscar boletos que vencerão daqui 7 dias');
+  const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
+  console.log('Enviar boletos que vencerão daqui 7 dias para clientes');
+  enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
+
+  console.log(
+    `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
+  );
 
   setTimeout(async () => {
-    await start(client);
-  }, secondsToWait * 1000);
+    await start(venomClient);
+  }, hoursToWait * 3600 * 1000);
 }

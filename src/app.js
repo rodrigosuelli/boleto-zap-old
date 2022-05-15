@@ -7,6 +7,27 @@ require('dotenv').config();
 
 const hoursToWait = 24; // 24 hours
 
+// Set axios interceptor
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    // if access token is invalid (code 401), generate new token
+    if (error.response.data.errCode === 401) {
+      const accessToken = await getAccessToken();
+      // Set api default Auth Header with new token
+      setApiAuthHeader(accessToken);
+
+      // Set originalRequest Authorization header with new token and retry request
+      const originalRequest = error.config;
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      return api.request(originalRequest);
+    }
+
+    console.error(error.response.data);
+    // return Promise.reject(error);
+  }
+);
+
 venom
   .create(
     'session-name',
@@ -20,12 +41,10 @@ venom
   });
 
 async function start(venomClient) {
-  console.log('Setar Authorization header with access_token');
+  // Get accessToken and set Authorization header with access_token
+  console.log('Set Authorization header with access_token');
   const accessToken = await getAccessToken();
-  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
-
-  // Change baseUrl
-  api.defaults.baseURL = 'https://v4.egestor.com.br/api/v1';
+  setApiAuthHeader(accessToken);
 
   // Get boletos em aberto que vencerão amanhã e enviar para cliente
   console.log('Buscar boletos que vencerão amanhã e enviar para cliente');
@@ -45,7 +64,7 @@ async function start(venomClient) {
   // Imprimir log dizendo que as operações do dia foram concluídas
   console.log('As operações de hoje foram concluídas.');
 
-  // Repeat every 24 hours
+  // Repeat the function start every 24 hours
   setTimeout(async () => {
     await start(venomClient);
   }, hoursToWait * 3600 * 1000);
@@ -57,10 +76,20 @@ async function getAccessToken() {
     personal_token: `${process.env.PERSONAL_TOKEN}`,
   };
 
-  const response = await api.post('/oauth/access_token', data);
+  const response = await api({
+    method: 'post',
+    baseUrl: undefined,
+    url: 'https://v4.egestor.com.br/api/oauth/access_token',
+    data,
+  });
+
   const accessToken = response.data.access_token;
 
   return accessToken;
+}
+
+function setApiAuthHeader(accessToken) {
+  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
 }
 
 async function getBoletosQueVenceraoDaqui(dias) {

@@ -22,22 +22,18 @@ venom
 async function start(venomClient) {
   // Set Authorization header with access_token
   console.log('Setar Authorization header with access_token');
-  const accessToken = getAccessToken();
+  const accessToken = await getAccessToken();
   api.defaults.headers.Authorization = `Bearer ${accessToken}`;
 
   // Change baseUrl
   api.defaults.baseURL = 'https://v4.egestor.com.br/api/v1';
 
   // Get boletos em aberto que vencerão amanhã e enviar para cliente
-  console.log('Buscar boletos que vencerão amanha');
   const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);
-  console.log('Enviar boletos que vencerão amanha para clientes');
   enviarBoletosParaClientes(boletosQueVenceraoAmanha);
 
   // Get boletos em aberto que vencerão nos próximos 7 dias e enviar para cliente
-  console.log('Buscar boletos que vencerão daqui 7 dias');
   const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
-  console.log('Enviar boletos que vencerão daqui 7 dias para clientes');
   enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
 
   // Imprimir log dizendo que as operações do dia foram concluídas

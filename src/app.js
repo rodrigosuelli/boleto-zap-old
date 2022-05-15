@@ -40,6 +40,7 @@ async function start(venomClient) {
   console.log('Enviar boletos que vencerão daqui 7 dias para clientes');
   enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
 
+  // Imprimir log dizendo que as operações do dia foram concluídas
   console.log(
     `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
   );

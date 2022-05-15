@@ -141,7 +141,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       )
       .then((result) => {})
       .catch(async (erro) => {
-        console.error('Error when sending: ', erro); // return object error
+        console.error('Error when sending text message: ', erro); // return object error
         await enviarMsgParaDesenvolvedor(erro, venomClient);
       });
 
@@ -155,7 +155,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       )
       .then((result) => {})
       .catch(async (erro) => {
-        console.error('Error when sending: ', erro); // return object error
+        console.error('Error when sending file: ', erro); // return object error
         await enviarMsgParaDesenvolvedor(erro, venomClient);
       });
 

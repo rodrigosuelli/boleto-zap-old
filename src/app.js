@@ -44,6 +44,7 @@ async function start(venomClient) {
     `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
   );
 
+  // Repeat every 24 hours
   setTimeout(async () => {
     await start(venomClient);
   }, hoursToWait * 3600 * 1000);

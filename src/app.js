@@ -112,7 +112,6 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
-        // Enviar mensagem de erro no Whatsapp do Desenvolvedor
         await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
       });
 
@@ -127,7 +126,6 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
-        // Enviar mensagem de erro no Whatsapp do Desenvolvedor
         await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
       });
 

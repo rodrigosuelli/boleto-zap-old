@@ -1,5 +1,4 @@
 const venom = require('venom-bot');
-
 const api = require('./services/api');
 const { currentDate, currentDatePlus } = require('../utils/dates');
 const downloadFile = require('../utils/downloadFile');
@@ -19,6 +18,33 @@ venom
   .catch((erro) => {
     console.log(erro);
   });
+
+async function start(venomClient) {
+  // Set Authorization header with access_token
+  console.log('Setar Authorization header with access_token');
+  const accessToken = getAccessToken();
+  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
+
+  // Get boletos em aberto que vencerão amanhã e enviar para cliente
+  console.log('Buscar boletos que vencerão amanha');
+  const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);
+  console.log('Enviar boletos que vencerão amanha para clientes');
+  enviarBoletosParaClientes(boletosQueVenceraoAmanha);
+
+  // Get boletos em aberto que vencerão nos próximos 7 dias e enviar para cliente
+  console.log('Buscar boletos que vencerão daqui 7 dias');
+  const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
+  console.log('Enviar boletos que vencerão daqui 7 dias para clientes');
+  enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
+
+  console.log(
+    `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
+  );
+
+  setTimeout(async () => {
+    await start(venomClient);
+  }, hoursToWait * 3600 * 1000);
+}
 
 async function getAccessToken() {
   const data = {
@@ -108,31 +134,4 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
 
     await deleteFile('./temp/boleto-cliente.pdf');
   });
-}
-
-async function start(venomClient) {
-  // Set Authorization header with access_token
-  console.log('Setar Authorization header with access_token');
-  const accessToken = getAccessToken();
-  api.defaults.headers.Authorization = `Bearer ${accessToken}`;
-
-  // Get boletos em aberto que vencerão amanhã e enviar para cliente
-  console.log('Buscar boletos que vencerão amanha');
-  const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);
-  console.log('Enviar boletos que vencerão amanha para clientes');
-  enviarBoletosParaClientes(boletosQueVenceraoAmanha);
-
-  // Get boletos em aberto que vencerão nos próximos 7 dias e enviar para cliente
-  console.log('Buscar boletos que vencerão daqui 7 dias');
-  const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
-  console.log('Enviar boletos que vencerão daqui 7 dias para clientes');
-  enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
-
-  console.log(
-    `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
-  );
-
-  setTimeout(async () => {
-    await start(venomClient);
-  }, hoursToWait * 3600 * 1000);
 }

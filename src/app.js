@@ -1,6 +1,6 @@
 const venom = require('venom-bot');
 const api = require('./services/api');
-const { currentDate, currentDatePlus } = require('./utils/dates');
+const { currentDatePlus } = require('./utils/dates');
 const downloadFile = require('./utils/downloadFile');
 const deleteFile = require('./utils/deleteFile');
 require('dotenv').config();
@@ -37,10 +37,13 @@ async function start(venomClient) {
   const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
   await enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
 
-  // Imprimir log dizendo que as operações do dia foram concluídas
-  console.log(
-    `Log ${currentDate} (yyyy-mm-dd) - As operações de hoje foram concluídas.`
+  await enviarMsgParaDesenvolvedor(
+    'As operações de hoje foram concluídas.',
+    venomClient
   );
+
+  // Imprimir log dizendo que as operações do dia foram concluídas
+  console.log('As operações de hoje foram concluídas.');
 
   // Repeat every 24 hours
   setTimeout(async () => {
@@ -72,9 +75,9 @@ async function getBoletosQueVenceraoDaqui(dias) {
   return { ...boletos, diasParaVencer: dias };
 }
 
-async function enviarMsgDeErroParaDesenvolvedor(msgErro, venomClient) {
+async function enviarMsgParaDesenvolvedor(message, venomClient) {
   await venomClient
-    .sendText(`55${process.env.TELEFONE_DESENVOLVEDOR}@c.us`, `${msgErro}`)
+    .sendText(`55${process.env.TELEFONE_DESENVOLVEDOR}@c.us`, `${message}`)
     .then((result) => {})
     .catch((err) => {
       console.error('Error when sending: ', err); // return object error
@@ -109,13 +112,13 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
-        await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
+        await enviarMsgParaDesenvolvedor(erro, venomClient);
       });
 
     // Enviar boleto
     await venomClient
       .sendFile(
-        `55${telefoneCliente}@c.us`,
+        `55${telefoneCliente}@message.us`,
         './temp/boleto-cliente.pdf',
         'boleto-cliente',
         'Veja meu arquivo pdf'
@@ -123,7 +126,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
-        await enviarMsgDeErroParaDesenvolvedor(erro, venomClient);
+        await enviarMsgParaDesenvolvedor(erro, venomClient);
       });
 
     await deleteFile('./temp/boleto-cliente.pdf');

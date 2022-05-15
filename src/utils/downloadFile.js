@@ -14,7 +14,7 @@ async function downloadFile(fileLink) {
   try {
     await pipeline(
       response.data,
-      fs.createWriteStream('/temp/boleto-cliente.pdf')
+      fs.createWriteStream('./temp/boleto-cliente.pdf')
     );
   } catch (error) {
     console.error('error downloading file:', error.message);

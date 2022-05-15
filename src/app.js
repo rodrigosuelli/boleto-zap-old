@@ -28,9 +28,10 @@ api.interceptors.response.use(
   }
 );
 
+// Create venom instance
 venom
   .create(
-    'session-name',
+    'boleto-zap',
     (base64Qrimg, asciiQR, attempts) => {},
     (statusSession, session) => {},
     { useChrome: false, browserArgs: ['--no-sandbox'] }

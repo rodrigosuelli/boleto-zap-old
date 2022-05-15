@@ -66,6 +66,7 @@ async function start(venomClient) {
 
   // Imprimir log dizendo que as operações do dia foram concluídas
   console.log('As operações de hoje foram concluídas.');
+  console.log('==============================================');
 
   // Repeat the function start every 24 hours
   setTimeout(async () => {

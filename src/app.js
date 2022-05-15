@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 const venom = require('venom-bot');
 const api = require('./services/api');
 const { currentDatePlus } = require('./utils/dates');
@@ -50,12 +52,12 @@ async function start(venomClient) {
   // Get boletos em aberto que vencerão amanhã e enviar para cliente
   console.log('Buscar boletos que vencerão amanhã e enviar para cliente');
   const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);
-  await enviarBoletosParaClientes(boletosQueVenceraoAmanha);
+  await enviarBoletosParaClientes(boletosQueVenceraoAmanha, venomClient);
 
   // Get boletos em aberto que vencerão nos próximos 7 dias e enviar para cliente
   console.log('Buscar boletos que vencerão daqui 7 dias e enviar para cliente');
   const boletosQueVenceraoDaqui7Dias = await getBoletosQueVenceraoDaqui(7);
-  await enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias);
+  await enviarBoletosParaClientes(boletosQueVenceraoDaqui7Dias, venomClient);
 
   await enviarMsgParaDesenvolvedor(
     'As operações de hoje foram concluídas.',
@@ -117,7 +119,14 @@ async function enviarMsgParaDesenvolvedor(message, venomClient) {
 async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
   const { diasParaVencer } = dadosDosBoletos.data;
 
-  dadosDosBoletos.data.forEach(async (element) => {
+  let mensagemDataVenc;
+  if (diasParaVencer === 1) {
+    mensagemDataVenc = 'amanhã';
+  } else {
+    mensagemDataVenc = `daqui a ${diasParaVencer}`;
+  }
+
+  for (const element of dadosDosBoletos) {
     const response = await api.get(`/boletos/${element.codigo}`);
 
     const linkBoleto = response.data.link;
@@ -129,15 +138,13 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
     const telefoneCliente = dadosCliente.fones[1];
     const nomeCliente = dadosCliente.nome;
 
-    downloadFile(linkBoleto);
+    await downloadFile(linkBoleto);
 
     // Enviar mensagem
     await venomClient
       .sendText(
         `55${telefoneCliente}@c.us`,
-        `Olá, ${nomeCliente}. Seu boleto exemplo vencerá em ${
-          diasParaVencer === 1 ? 'amanhã' : diasParaVencer
-        }`
+        `Olá, ${nomeCliente}. Seu boleto vencerá ${mensagemDataVenc}.`
       )
       .then((result) => {})
       .catch(async (erro) => {
@@ -148,7 +155,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
     // Enviar boleto
     await venomClient
       .sendFile(
-        `55${telefoneCliente}@message.us`,
+        `55${telefoneCliente}@c.us`,
         './temp/boleto-cliente.pdf',
         'boleto-cliente',
         'Veja meu arquivo pdf'
@@ -160,5 +167,5 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
       });
 
     await deleteFile('./temp/boleto-cliente.pdf');
-  });
+  }
 }

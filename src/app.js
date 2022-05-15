@@ -25,6 +25,9 @@ async function start(venomClient) {
   const accessToken = getAccessToken();
   api.defaults.headers.Authorization = `Bearer ${accessToken}`;
 
+  // Change baseUrl
+  api.defaults.baseURL = 'https://v4.egestor.com.br/api/v1';
+
   // Get boletos em aberto que vencerão amanhã e enviar para cliente
   console.log('Buscar boletos que vencerão amanha');
   const boletosQueVenceraoAmanha = await getBoletosQueVenceraoDaqui(1);

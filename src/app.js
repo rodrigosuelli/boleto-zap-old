@@ -1,8 +1,8 @@
 const venom = require('venom-bot');
 const api = require('./services/api');
-const { currentDate, currentDatePlus } = require('../utils/dates');
-const downloadFile = require('../utils/downloadFile');
-const deleteFile = require('../utils/deleteFile');
+const { currentDate, currentDatePlus } = require('./utils/dates');
+const downloadFile = require('./utils/downloadFile');
+const deleteFile = require('./utils/deleteFile');
 require('dotenv').config();
 
 const hoursToWait = 24; // 24 hours

@@ -2,7 +2,7 @@ const util = require('util');
 const stream = require('stream');
 const fs = require('fs');
 
-const api = require('../src/services/api');
+const api = require('../services/api');
 
 const pipeline = util.promisify(stream.pipeline);
 

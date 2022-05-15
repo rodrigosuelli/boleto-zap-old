@@ -16,8 +16,6 @@ async function downloadFile(fileLink) {
       response.data,
       fs.createWriteStream('/temp/boleto-cliente.pdf')
     );
-
-    console.log('download pdf pipeline successful');
   } catch (error) {
     console.error('error downloading file:', error.message);
   }

@@ -73,9 +73,7 @@ async function getBoletosQueVenceraoDaqui(dias) {
 async function enviarMsgDeErroParaDesenvolvedor(msgErro, venomClient) {
   await venomClient
     .sendText(`55${process.env.TELEFONE_DESENVOLVEDOR}@c.us`, `${msgErro}`)
-    .then((result) => {
-      console.log('Result: ', result); // return object success
-    })
+    .then((result) => {})
     .catch((err) => {
       console.error('Error when sending: ', err); // return object error
     });
@@ -106,9 +104,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
           diasParaVencer === 1 ? 'amanhã' : diasParaVencer
         }`
       )
-      .then((result) => {
-        console.log('Result: ', result); // return object success
-      })
+      .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
         // Enviar mensagem de erro no Whatsapp do Desenvolvedor
@@ -123,9 +119,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
         'boleto-cliente',
         'Veja meu arquivo pdf'
       )
-      .then((result) => {
-        console.log('Result: ', result); // return object success
-      })
+      .then((result) => {})
       .catch(async (erro) => {
         console.error('Error when sending: ', erro); // return object error
         // Enviar mensagem de erro no Whatsapp do Desenvolvedor

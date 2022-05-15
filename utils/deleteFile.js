@@ -11,9 +11,8 @@ access(file, constants.F_OK, (err) => {
 async function deleteFile(filePath) {
   try {
     await unlink(filePath);
-    console.log(`successfully deleted ${filePath}`);
   } catch (error) {
-    console.error('there was an error:', error.message);
+    console.error('there was an error deleting the file:', error.message);
   }
 }
 

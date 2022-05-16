@@ -124,7 +124,7 @@ async function enviarBoletosParaClientes(dadosDosBoletos, venomClient) {
   if (diasParaVencer === 1) {
     mensagemDataVenc = 'amanhã';
   } else {
-    mensagemDataVenc = `daqui a ${diasParaVencer}`;
+    mensagemDataVenc = `daqui a ${diasParaVencer} dias`;
   }
 
   for (const element of dadosDosBoletos) {
